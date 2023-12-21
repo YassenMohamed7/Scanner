@@ -84,12 +84,13 @@ void tokenize(const string& input) {
     for (char c : input) {
         string str = "";
             str += c;
-        if(matchSpecialCharacter(str)){
-            if(!currentToken.empty() && currentToken != " "){
+        if(matchSpecialCharacter(str) || matchOperator(str)){
+            if(!currentToken.empty()){
                 tokens.push_back(findType(currentToken));
                 currentToken.clear();
             }
-            tokens.push_back({"special character", str});
+
+            tokens.push_back(findType(str));
         }
         else if (isspace(c) && !currentToken.empty())  
         {
@@ -107,7 +108,6 @@ void tokenize(const string& input) {
     if (!currentToken.empty()) {
            tokens.push_back(findType(currentToken));
     }
-
 }
 
 int main() {
