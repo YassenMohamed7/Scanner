@@ -1,71 +1,131 @@
-#include <iostream>
-#include <regex>
-#include <string>
+#include <bits/stdc++.h>
+
 
 using namespace std;
 
-int main() {
-    // Regular expressions for different token types
-    regex identifierRegex("[a-zA-Z_][a-zA-Z0-9_]*");
-    regex keywordRegex("\\b(if|else|while|for|int|float|char)\\b");
-    regex operatorRegex("[+\\-*/%=]|==|!=|<=?|>=?|&&|\\|\\|");
-    regex numericConstantRegex("\\d+\\.?\\d*|\\.\\d+");
-    regex characterConstantRegex("'[^']'");
-    regex stringLiteralRegex("\"[^\"]*\"");
-    regex specialCharacterRegex("[{}();,]");
-    regex commentRegex("//.*|/\\*.*?\\*/");
-    regex whitespaceRegex("\\s+");
-    regex newlineRegex("\\n");
+bool matchKeyword(const std::string& lexeme) {
+    // List of common C++ keywords
+    std::unordered_set<std::string> keywords = {
+        "int", "double", "char", "if", "else", "while", "for", "return", "string"// Add more keywords as needed
+    };
+    // Check if the lexeme is in the set of keywords
+    return keywords.find(lexeme) != keywords.end();
+}
 
-    string input;
-    cout << "Enter the C++ code (type 'exit' to quit):\n";
+bool matchIdentifier(const std::string& lexeme) {
+    // Regular expression for a C++ identifier
+    std::regex identifierRegex("^[a-zA-Z_][a-zA-Z0-9_]*$");
 
-    while (true) {
-        getline(cin, input);
+    // Check if the lexeme matches the regex
+    return std::regex_match(lexeme, identifierRegex);
+}
 
-        if (input == "exit") {
-            break;
-        }
+bool matchOperator(const std::string& lexeme) {
+    // List of common C++ keywords
+    std::unordered_set<std::string> opeartors = {
+        "=", "==", ">", "<", ">=", "<=", "!=", "~","|", "&", "&&"
+        };
+    return opeartors.find(lexeme) != opeartors.end();
+}
 
-        smatch match;
+bool matchNumeric(string& lexeme){
+    regex numericRegex("[0-9]*");
 
-        // Process the input string until no matches are found
-        while (!input.empty()) {
-            if (regex_search(input, match, keywordRegex)) {
-                cout << "Keyword: " << match[0] << endl;
-            } else if (regex_search(input, match, identifierRegex)) {
-                cout << "Identifier: " << match[0] << endl;
-            } else if (regex_search(input, match, operatorRegex)) {
-                // Output the entire matched sequence as an operator
-                cout << "Operator: " << match[0] << endl;
-            } else if (regex_search(input, match, specialCharacterRegex)) {
-                cout << "Special Character: " << match[0] << endl;
-                // Move to the next character after the match
-            } else if (regex_search(input, match, numericConstantRegex)) {
-                cout << "Numeric Constant: " << match[0] << endl;
-            } else if (regex_search(input, match, characterConstantRegex)) {
-                cout << "Character Constant: " << match[0] << endl;
-            } else if (regex_search(input, match, stringLiteralRegex)) {
-                cout << "String Literal: " << match[0] << endl;
-            } else if (regex_search(input, match, commentRegex)) {
-                cout << "Comment: " << match[0] << endl;
-                // Move to the next line after a comment
-                size_t pos = input.find_first_of("\n");
-                if (pos != string::npos) {
-                    input = input.substr(pos + 1);
-                } else {
-                    break; // No newline found, exit the loop
-                }
-            } else if (regex_search(input, match, whitespaceRegex)) {
-                // Stop tokenizing at whitespaces
-            } else if (regex_search(input, match, newlineRegex)) {
-                // Stop tokenizing at newlines
+    return regex_match(lexeme, numericRegex);
+}
+
+bool matchSpecialCharacter(string& lexeme){
+    unordered_set<string> specialCharacters = {
+        ",", ";", ":", ".", "(",")", "{", "}"
+    };
+
+    return specialCharacters.find(lexeme) != specialCharacters.end();
+}
+
+
+// Define a simple token structure
+struct Token {
+    string type;
+    string value;
+};
+
+
+Token findType(string& currentToken){
+     if (!currentToken.empty() && matchKeyword(currentToken)) 
+            {                
+                return { "keyword", currentToken };
+            } 
+            else if (!currentToken.empty() && matchIdentifier(currentToken)) 
+            {
+                return { "Identifier", currentToken };
             }
-            // Move to the next character after the match
-            input = match.suffix();
+            else if (!currentToken.empty() && matchOperator(currentToken)) 
+            {
+                return { "Operator", currentToken };
+            }
+            else if (!currentToken.empty() && matchNumeric(currentToken)) 
+            {
+                return { "Numeric constant", currentToken };
+            }
+            else if (!currentToken.empty() && matchSpecialCharacter(currentToken)) 
+            {
+                return { "Special character", currentToken };
+            }
+            else {
+                return {"No type" ,currentToken};
+            }
+}
+
+
+deque<Token> tokens;
+// Tokenize the input string
+void tokenize(const string& input) {
+    string currentToken;
+    for (char c : input) {
+        string str = "";
+            str += c;
+        if(matchSpecialCharacter(str)){
+            if(!currentToken.empty() && currentToken != " "){
+                tokens.push_back(findType(currentToken));
+                currentToken.clear();
+            }
+            tokens.push_back({"special character", str});
+        }
+        else if (isspace(c) && !currentToken.empty())  
+        {
+           tokens.push_back(findType(currentToken));
+           currentToken.clear();
+        }
+        else {
+            currentToken += c;
+        }
+        if(currentToken == " "){
+            currentToken.clear();
         }
     }
 
-    return 0;
+    if (!currentToken.empty()) {
+           tokens.push_back(findType(currentToken));
+    }
+
 }
 
+
+int main() {
+    string input;
+
+    // Get input string from the user
+    cout << "Enter a C++-like instruction: \n";
+
+    while(getline(cin, input))
+    {
+        tokenize(input);
+    }
+    for(auto token : tokens)
+    {
+        cout << "<" << token.type << " ," << token.value << ">\n"; 
+    }
+
+    return 0;
+
+};
