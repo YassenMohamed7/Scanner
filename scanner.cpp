@@ -110,7 +110,6 @@ void tokenize(const string& input) {
 
 }
 
-
 int main() {
     string input;
 
